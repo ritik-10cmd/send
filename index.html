@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head><title>Send My Location</title></head>
+<body>
+<button onclick="start()">Start Sending Location</button>
+
+<script>
+let socket, watchId;
+
+function start() {
+  socket = new WebSocket('wss://366c7cb5c730.ngrok-free.app/bus'); // use your server IP
+
+  socket.onopen = () => {
+    if ('geolocation' in navigator) {
+      watchId = navigator.geolocation.watchPosition(
+        (pos) => {
+          if (socket.readyState === WebSocket.OPEN) {
+            const speed = (pos.coords.speed !== null && pos.coords.speed !== undefined) ? pos.coords.speed : 0;
+            socket.send(JSON.stringify({
+              latitude: pos.coords.latitude,
+              longitude: pos.coords.longitude,
+              speed: speed,
+            }));
+          }
+        },
+        (err) => {
+          console.error('Geolocation error:', err);
+        },
+        { enableHighAccuracy: true }
+      );
+    } else {
+      alert('Geolocation not supported');
+    }
+  };
+
+  socket.onclose = () => {
+    if (watchId) navigator.geolocation.clearWatch(watchId);
+  };
+
+  socket.onerror = (err) => {
+    console.error('WebSocket error:', err);
+  };
+}
+</script>
+
+</body>
+</html>
+
+
+
+
